@@ -11,17 +11,16 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-
 - task: AzureResourceManagerTemplateDeployment@3
   inputs:
     deploymentScope: 'Resource Group'
     azureResourceManagerConnection: 'ARMPipeline-conn'
     subscriptionId: 'd1f0c2dc-a3b9-495a-92fa-be44caa31b3a'
     action: 'Create Or Update Resource Group'
-    resourceGroupName: 'AzureDeployrg'
+    resourceGroupName: 'ARMPipeline-rg'
     location: 'UK South'
     templateLocation: 'URL of the file'
-    csmFileLink: 'https://raw.githubusercontent.com/jaseruk/AzureDeploy/main/create_web_app/azuredeploy.json'
-    overrideParameters: '-projectName azuredeploy'
+    csmFileLink: 'https://raw.githubusercontent.com/jaseruk/AzureDeploy/main/create_web_app/azuredeploy.json?token=GHSAT0AAAAAACV74RUM6WP3Q3PXOWDLF5JIZV2D4BQ'
+    overrideParameters: '-projectname myarmpipeline'
     deploymentMode: 'Incremental'
     deploymentName: 'DeployPipelineTemplate'
