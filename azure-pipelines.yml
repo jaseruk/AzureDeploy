@@ -26,4 +26,4 @@ steps:
     csmFileLink: 'https://raw.githubusercontent.com/jaseruk/AzureDeploy/main/create_web_app/azuredeploy.json'
     csmParametersFileLink: 'https://raw.githubusercontent.com/jaseruk/AzureDeploy/main/create_web_app/azuredeploy.parameters.dev.json'
     deploymentMode: 'Incremental'
-    deploymentName: 'Prod Parameters'
+    deploymentName: 'ProdParameters'
