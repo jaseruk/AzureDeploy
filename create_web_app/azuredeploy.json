@@ -2,20 +2,39 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "projectName": {
+    "storagePrefix": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 11,
-      "metadata": {
-        "description": "Specify a project name that is used to generate resource names."
-      }
+      "maxLength": 11
+    },
+    "storageSKU": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GZRS",
+        "Standard_RAGZRS"
+      ]
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "exampleplan"
+    },
+    "webAppName": {
+      "type": "string",
       "metadata": {
-        "description": "Specify a location for the resources."
-      }
+        "description": "Base name of the resource such as web app name and app service plan "
+      },
+      "minLength": 2
     },
     "linuxFxVersion": {
       "type": "string",
@@ -23,38 +42,40 @@
       "metadata": {
         "description": "The Runtime stack of current web app"
       }
+    },
+    "resourceTags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Dev",
+        "Project": "Tutorial"
+      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(parameters('projectName'), uniqueString(resourceGroup().id))]",
-    "webAppName": "[concat(parameters('projectName'), 'WebApp')]",
-    "appServicePlanName": "[concat(parameters('projectName'), 'Plan')]"
+    "uniqueStorageName": "[concat(parameters('storagePrefix'), uniqueString(resourceGroup().id))]",
+    "webAppPortalName": "[concat(parameters('webAppName'), uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
-      "name": "linkedTemplate",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-09-01",
+      "name": "[variables('uniqueStorageName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
+      "sku": {
+        "name": "[parameters('storageSKU')]"
+      },
+      "kind": "StorageV2",
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "relativePath": "linkedStorageAccount.json"
-        },
-        "parameters": {
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          }
-        }
+        "supportsHttpsTrafficOnly": true
       }
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2022-09-01",
-      "name": "[variables('appServicePlanName')]",
+      "apiVersion": "2021-03-01",
+      "name": "[parameters('appServicePlanName')]",
       "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
       "sku": {
         "name": "B1",
         "tier": "Basic",
@@ -72,15 +93,16 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2022-09-01",
-      "name": "[variables('webAppName')]",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('webAppPortalName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+        "[parameters('appServicePlanName')]"
       ],
+      "tags": "[parameters('resourceTags')]",
       "kind": "app",
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
         "siteConfig": {
           "linuxFxVersion": "[parameters('linuxFxVersion')]"
         }
@@ -90,7 +112,7 @@
   "outputs": {
     "storageEndpoint": {
       "type": "object",
-      "value": "[reference('linkedTemplate').outputs.storageEndpoint.value]"
+      "value": "[reference(variables('uniqueStorageName')).primaryEndpoints]"
     }
   }
 }
